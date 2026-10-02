@@ -1,0 +1,45 @@
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+*.egg
+
+# ── Environment ───────────────────────────────────────────
+.env
+
+# ── IDE ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Testing / Coverage ───────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Artifacts / Caches ───────────────────────────────────
+*.sqlite3
+llm_cache/
+eval/results/
+node_modules/
+dashboard/dist/
+
+# ── Alembic ───────────────────────────────────────────────
+# Keep versions tracked
+
+# ── Documents / Patents ──────────────────────────────────
+*.docx
+scratch/
+
+# ── Confidential & Setup ─────────────────────────────────
+alembic.ini
+delete_memory.py
