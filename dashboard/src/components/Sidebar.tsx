@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { MessageSquare, Database, Shield, Zap } from 'lucide-react';
+import { MessageSquare, Database, Shield, Zap, Sliders } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Sidebar() {
@@ -72,6 +72,22 @@ export default function Sidebar() {
         >
           <Zap size={18} />
           Risk Metrics
+        </NavLink>
+        
+        <NavLink 
+          to="/pareto" 
+          style={({ isActive }) => ({
+            display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '12px 16px', borderRadius: '12px',
+            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+            background: isActive ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+            textDecoration: 'none',
+            fontWeight: 500,
+            transition: 'all 0.2s ease'
+          })}
+        >
+          <Sliders size={18} />
+          Pareto Demo
         </NavLink>
       </nav>
 

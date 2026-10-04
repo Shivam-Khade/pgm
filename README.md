@@ -120,7 +120,7 @@ alembic/                   # Database migrations
 | M4 | Utility estimators + decay policies + solver + greedy | 🟢 Done |
 | M5 | LangGraph agent + FastAPI + maintenance scheduler | 🟢 Done |
 | M6 | Synthetic benchmark + attacks + metrics + experiments | 🟢 Done |
-| M7 | Dashboard (React + TypeScript) | ⬜ |
+| M7 | Dashboard (React + TypeScript) | 🟢 Done |
 | M8 | Docs, reproducibility, limitations | ⬜ |
 
 ## Key Design Decisions

@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Chat from './pages/Chat';
 import Memories from './pages/Memories';
 import RiskMetrics from './pages/RiskMetrics';
+import ParetoDemo from './pages/ParetoDemo';
 import './index.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<Chat />} />
             <Route path="/memories" element={<Memories />} />
             <Route path="/risk" element={<RiskMetrics />} />
+            <Route path="/pareto" element={<ParetoDemo />} />
           </Routes>
         </main>
       </div>
