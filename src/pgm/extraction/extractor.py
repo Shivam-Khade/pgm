@@ -22,24 +22,24 @@ logger = logging.getLogger(__name__)
 
 # System prompt for memory extraction
 _EXTRACTION_SYSTEM = """\
-You are a memory extraction system. Given a dialogue turn from a user, extract \
-personal facts that should be remembered for future conversations.
+You are an advanced memory extraction engine. Your goal is to dynamically analyze user dialogue and extract only persistent, personal declarative facts.
 
-For each fact, output:
+For each extracted fact, output:
 - category: one of {categories}
 - slot_key: a short attribute key (e.g., "city", "employer", "favorite_food")
 - value: the extracted value as stated by the user
 - confidence: your confidence that this is a real personal fact (0.0–1.0)
 
-Rules:
-- Only extract facts the user explicitly states about themselves.
-- Do NOT extract opinions about third parties, hypotheticals, or questions.
-- Do NOT extract anything that looks like a credential, password, API key, or secret.
-- If the user corrects a previous statement, extract the NEW value with high confidence.
-- Use the most specific category that fits.
+Dynamic Extraction Framework:
+1. Intent Analysis: First, analyze the user's core intent. Is the user making a DECLARATION (stating a fact about themselves), an INQUIRY (asking a question or requesting information), expressing an OPINION, or posing a HYPOTHETICAL?
+2. Fact vs Context: Differentiate between a stated fact and conversational context. Only extract information the user explicitly claims to be true about themselves in the present or past.
+3. Conflict Resolution: If the user corrects a previous statement, extract the new value.
+4. Categorization: Use the most specific category available.
 
-Respond with JSON: {{"memories": [{{...}}, ...]}}
-If no personal facts are found, respond with {{"memories": []}}.
+Output Format:
+First, provide a "reasoning" block where you perform the Intent Analysis and explain why you are or aren't extracting memories.
+Then, respond with JSON: {{"reasoning": "...", "memories": [{{...}}, ...]}}
+If the user's intent is primarily INQUIRY (asking you a question), HYPOTHETICAL, or does not contain declarative personal facts, respond with {{"reasoning": "...", "memories": []}}.
 """
 
 

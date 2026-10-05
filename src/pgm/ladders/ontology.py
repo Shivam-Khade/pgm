@@ -15,3 +15,7 @@ class OntologyRegistry:
 
     def get_adapters(self, category: MemoryCategory, slot_key: str) -> list:
         return []
+        
+    def propose_all(self, exact_text: str, category: MemoryCategory, slot_key: str) -> list:
+        """Returns empty list to force fallback to LLMProposer."""
+        return []

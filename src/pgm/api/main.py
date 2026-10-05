@@ -110,6 +110,8 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     maintenance_ops_run: int
+    suggested_actions: list[str] = []
+    confidence_score: float = 1.0
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest, agent: PGMAgent = Depends(get_agent)) -> ChatResponse:
@@ -145,7 +147,9 @@ async def chat(request: ChatRequest, agent: PGMAgent = Depends(get_agent)) -> Ch
         
         return ChatResponse(
             answer=result.get("answer", ""),
-            maintenance_ops_run=result.get("maintenance_ops", 0)
+            maintenance_ops_run=result.get("maintenance_ops", 0),
+            suggested_actions=result.get("suggested_actions", []),
+            confidence_score=result.get("confidence_score", 1.0)
         )
     except Exception as e:
         import logging
@@ -194,6 +198,27 @@ async def get_memories(user_id: str, session: AsyncSession = Depends(get_db_sess
         }
         for m in memories
     ]
+
+@app.delete("/memories/{memory_id}")
+async def delete_memory(memory_id: str, session: AsyncSession = Depends(get_db_session)) -> dict[str, str]:
+    """Manually delete a specific memory."""
+    from sqlalchemy import select
+    
+    try:
+        mem_uuid = uuid.UUID(memory_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid memory ID format (must be UUID)")
+        
+    stmt = select(Memory).where(Memory.id == mem_uuid)
+    result = await session.execute(stmt)
+    mem = result.scalars().first()
+    
+    if mem is None:
+        raise HTTPException(status_code=404, detail="Memory not found")
+        
+    await session.delete(mem)
+    await session.commit()
+    return {"status": "success", "message": "Memory deleted"}
 
 @app.get("/risk/{user_id}")
 async def get_risk_metrics(user_id: str, session: AsyncSession = Depends(get_db_session)) -> dict[str, Any]:

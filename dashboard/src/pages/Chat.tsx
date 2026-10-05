@@ -11,6 +11,8 @@ type Message = {
   content: string;
   metadata?: {
     maintenanceOps?: number;
+    suggestedActions?: string[];
+    confidenceScore?: number;
   }
 };
 
@@ -53,7 +55,11 @@ export default function Chat() {
         id: (Date.now() + 1).toString(), 
         role: 'ai', 
         content: data.answer,
-        metadata: { maintenanceOps: data.maintenance_ops_run }
+        metadata: { 
+          maintenanceOps: data.maintenance_ops_run,
+          suggestedActions: data.suggested_actions,
+          confidenceScore: data.confidence_score
+        }
       };
       setMessages(prev => [...prev, aiMsg]);
       
@@ -91,6 +97,37 @@ export default function Chat() {
                   <div className="message-content">
                     {msg.content}
                   </div>
+                  
+                  {msg.metadata?.suggestedActions && msg.metadata.suggestedActions.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      {msg.metadata.suggestedActions.map((action, idx) => (
+                        <button 
+                          key={idx} 
+                          onClick={() => setInput(action)}
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: '0.8rem', 
+                            backgroundColor: 'var(--bg-card)', 
+                            border: '1px solid var(--border)',
+                            borderRadius: '16px',
+                            cursor: 'pointer',
+                            color: 'var(--text-primary)',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--border)'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
+                        >
+                          {action}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {msg.metadata?.confidenceScore !== undefined && msg.role === 'ai' && (
+                     <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                        Confidence: {(msg.metadata.confidenceScore * 100).toFixed(0)}%
+                     </div>
+                  )}
                   {msg.metadata?.maintenanceOps !== undefined && msg.metadata.maintenanceOps > 0 && (
                     <motion.div 
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }}

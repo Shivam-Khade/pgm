@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Database, ShieldAlert, ArrowUpRight, Clock, Box } from 'lucide-react';
+import { Database, ShieldAlert, ArrowUpRight, Clock, Box, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const USER_ID = "00000000-0000-0000-0000-000000000777";
@@ -25,7 +25,24 @@ type Memory = {
 export default function Memories() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedMemories, setExpandedMemories] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [memoryToDelete, setMemoryToDelete] = useState<string | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+  
+  // Filtering and Sorting State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [levelFilter, setLevelFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+
+  const toggleExpand = (id: string) => {
+    setExpandedMemories(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const fetchMemories = async () => {
     setIsLoading(true);
@@ -38,6 +55,21 @@ export default function Memories() {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const executeDelete = async (memoryId: string) => {
+    try {
+      const res = await fetch(`${API_URL}/memories/${memoryId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete memory');
+      setMemories(prev => prev.filter(m => m.id !== memoryId));
+      showToast('Memory successfully deleted', 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete memory', 'error');
+    } finally {
+      setMemoryToDelete(null);
     }
   };
 
@@ -68,6 +100,40 @@ export default function Memories() {
           </div>
         )}
         
+        {/* Filters and Controls */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <input 
+            type="text" 
+            className="input" 
+            placeholder="Search memories..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ flex: '1 1 200px', minWidth: '200px' }}
+          />
+          <select 
+            className="input" 
+            value={levelFilter} 
+            onChange={(e) => setLevelFilter(e.target.value)}
+            style={{ width: 'auto', appearance: 'auto', paddingRight: '12px' }}
+          >
+            <option value="all">All Levels</option>
+            <option value="0">Level 0</option>
+            <option value="1">Level 1</option>
+            <option value="2">Level 2</option>
+            <option value="3">Level 3</option>
+          </select>
+          <select 
+            className="input" 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{ width: 'auto', appearance: 'auto', paddingRight: '12px' }}
+          >
+            <option value="newest">Newest Accessed</option>
+            <option value="oldest">Oldest Accessed</option>
+            <option value="most_accessed">Most Accessed</option>
+          </select>
+        </div>
+        
         {isLoading && memories.length === 0 ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '64px' }}>
             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
@@ -82,7 +148,26 @@ export default function Memories() {
         ) : (
           <div className="grid-3">
             <AnimatePresence>
-              {memories.map((mem) => (
+              {memories
+                .filter(mem => {
+                  // Level filter
+                  if (levelFilter !== 'all' && mem.current_level !== parseInt(levelFilter)) return false;
+                  // Search filter
+                  if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    return mem.current_text.toLowerCase().includes(q) || 
+                           mem.category.toLowerCase().includes(q) || 
+                           mem.slot_key.toLowerCase().includes(q);
+                  }
+                  return true;
+                })
+                .sort((a, b) => {
+                  if (sortBy === 'newest') return new Date(b.last_accessed_at).getTime() - new Date(a.last_accessed_at).getTime();
+                  if (sortBy === 'oldest') return new Date(a.last_accessed_at).getTime() - new Date(b.last_accessed_at).getTime();
+                  if (sortBy === 'most_accessed') return b.access_count - a.access_count;
+                  return 0;
+                })
+                .map((mem) => (
                 <motion.div
                   key={mem.id}
                   layout
@@ -90,11 +175,23 @@ export default function Memories() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="glass-panel memory-card"
                 >
-                  <div className="memory-card-header">
-                    <span className="badge badge-info">{mem.category} / {mem.slot_key}</span>
-                    <span className={`badge ${mem.current_level > 0 ? 'badge-danger' : ''}`} style={{ background: mem.current_level > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.05)', color: mem.current_level > 0 ? 'var(--warning)' : 'var(--text-secondary)' }}>
-                      L{mem.current_level}
-                    </span>
+                  <div className="memory-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className="badge badge-info">{mem.category} / {mem.slot_key}</span>
+                      <span className={`badge ${mem.current_level > 0 ? 'badge-danger' : ''}`} style={{ background: mem.current_level > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.05)', color: mem.current_level > 0 ? 'var(--warning)' : 'var(--text-secondary)' }}>
+                        L{mem.current_level}
+                      </span>
+                    </div>
+                    <button 
+                      className="btn btn-ghost btn-sm" 
+                      onClick={() => setMemoryToDelete(mem.id)}
+                      style={{ padding: '4px', color: 'var(--danger)', opacity: 0.7 }}
+                      title="Delete Memory"
+                      onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseOut={(e) => e.currentTarget.style.opacity = '0.7'}
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   
                   <div className="memory-card-body text-gradient" style={{ fontSize: '1.25rem', fontWeight: 600 }}>
@@ -114,12 +211,28 @@ export default function Memories() {
                   
                   {mem.ladders && mem.ladders.length > 0 && (
                     <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Generalization Ladder</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Generalization Ladder</h4>
+                        {mem.ladders.length > 1 && (
+                          <button 
+                            className="btn btn-ghost btn-sm" 
+                            style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                            onClick={() => toggleExpand(mem.id)}
+                          >
+                            {expandedMemories[mem.id] ? 'Hide Levels' : 'Show All Levels'}
+                          </button>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
                         {/* Connecting line */}
-                        <div style={{ position: 'absolute', left: '11px', top: '10px', bottom: '10px', width: '2px', background: 'rgba(255,255,255,0.05)' }} />
+                        {expandedMemories[mem.id] && (
+                          <div style={{ position: 'absolute', left: '11px', top: '10px', bottom: '10px', width: '2px', background: 'rgba(255,255,255,0.05)' }} />
+                        )}
                         
-                        {mem.ladders.sort((a, b) => a.level - b.level).map((ladder, idx) => {
+                        {mem.ladders
+                          .sort((a, b) => a.level - b.level)
+                          .filter(ladder => expandedMemories[mem.id] || ladder.level === mem.current_level)
+                          .map((ladder, idx) => {
                           const isActive = ladder.level === mem.current_level;
                           return (
                             <motion.div 
@@ -165,6 +278,80 @@ export default function Memories() {
           </div>
         )}
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              right: '24px',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              background: toast.type === 'success' ? 'var(--bg-card)' : 'rgba(239, 68, 68, 0.9)',
+              color: toast.type === 'success' ? 'var(--accent-primary)' : 'white',
+              border: toast.type === 'success' ? '1px solid var(--accent-primary)' : 'none',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              fontWeight: 500,
+            }}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Delete Confirmation Toast */}
+      <AnimatePresence>
+        {memoryToDelete && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            style={{
+              position: 'fixed',
+              bottom: '32px',
+              left: '50%',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--danger)',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+              zIndex: 1100,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '24px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <ShieldAlert size={20} color="var(--danger)" />
+              <span style={{ fontWeight: 500 }}>Permanently delete this memory?</span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => setMemoryToDelete(null)}
+                style={{ padding: '6px 16px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-sm" 
+                onClick={() => executeDelete(memoryToDelete)}
+                style={{ padding: '6px 16px', background: 'var(--danger)', color: 'white', border: 'none' }}
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

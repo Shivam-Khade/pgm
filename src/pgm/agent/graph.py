@@ -27,6 +27,8 @@ class AgentState(TypedDict):
     extracted_memories: list[str]  # Just IDs or strings for logging
     retrieved_context: list[str]
     answer: str
+    suggested_actions: list[str]
+    confidence_score: float
     maintenance_ops: int
 
 
@@ -78,6 +80,14 @@ class PGMAgent:
             stored = await self._repo.create_memory(mem, state["user_id"])
             ids.append(str(stored.id))
             
+            # Pre-build the generalization ladder immediately so it is available in the UI
+            # even before the privacy budget is exceeded. We set verify=False to prevent 
+            # strict LLM verifiers from overly rejecting good ladders.
+            try:
+                await self._solver._builder.build_ladder_for_memory(stored, verify=False)
+            except Exception as e:
+                logger.error("Failed to pre-build ladder for memory %s: %s", stored.id, e)
+            
         if ids:
             await self._repo._session.flush()
             
@@ -112,17 +122,37 @@ class PGMAgent:
 You have access to a privacy-preserving long-term memory system.
 Use the provided memory context to answer the user naturally. Do not mention the memory system itself.
 
+You MUST respond in valid JSON format exactly matching this schema:
+{{
+    "answer": "Your conversational reply to the user",
+    "suggested_actions": ["action1", "action2"],
+    "confidence_score": 0.95
+}}
+
 Memory Context:
 {context_str}
 """
         
-        answer = await self._llm.complete(
-            state["message"],
-            system=system_prompt,
-            temperature=0.7
-        )
-        
-        return {"answer": answer}
+        try:
+            response_data = await self._llm.complete_json(
+                state["message"],
+                system=system_prompt,
+                temperature=0.7
+            )
+            answer = response_data.get("answer", "I encountered an error formatting my response.")
+            suggested_actions = response_data.get("suggested_actions", [])
+            confidence_score = response_data.get("confidence_score", 1.0)
+        except Exception as e:
+            logger.error("Failed to get JSON response: %s", e)
+            answer = "Sorry, I encountered an error generating a structured response."
+            suggested_actions = []
+            confidence_score = 0.0
+            
+        return {
+            "answer": answer,
+            "suggested_actions": suggested_actions,
+            "confidence_score": confidence_score
+        }
 
     async def _node_maintenance(self, state: AgentState) -> dict:
         """Run the privacy budget solver if new memories were added."""

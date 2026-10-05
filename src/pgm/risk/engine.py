@@ -24,12 +24,15 @@ def _bits(fraction: float) -> float:
 class RiskEngine:
     """Computes k-anonymity (k_hat) and aggregate risk (R_agg)."""
     
-    # Categories considered "quasi-identifiers" for k-anonymity
+    # Categories considered "quasi-identifiers" for k-anonymity.
+    # Updated to include Finance and Identity based on strict privacy needs.
     QUASI_IDENTIFIERS = {
         MemoryCategory.LOCATION,
         MemoryCategory.EMPLOYMENT,
         MemoryCategory.EDUCATION,
         MemoryCategory.HEALTH,
+        MemoryCategory.FINANCE,
+        MemoryCategory.IDENTITY,
     }
 
     def __init__(
