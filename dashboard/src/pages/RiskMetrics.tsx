@@ -115,18 +115,8 @@ export default function RiskMetrics() {
             </motion.div>
 
             {/* Metrics Grid */}
-            <div className="grid-3">
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="glass-panel" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                  <Lock size={18} /> Estimated k-Anonymity (k-hat)
-                </div>
-                <div className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 700 }}>
-                  {latest?.k_hat ? Math.round(latest.k_hat).toLocaleString() : 'N/A'}
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                  Minimum population bucket size based on current QIs.
-                </p>
-              </motion.div>
+            <div className="grid-2">
+
               
               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }} className="glass-panel" style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '16px' }}>

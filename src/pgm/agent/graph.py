@@ -85,6 +85,19 @@ class PGMAgent:
             # strict LLM verifiers from overly rejecting good ladders.
             try:
                 await self._solver._builder.build_ladder_for_memory(stored, verify=False)
+                
+                # Place info at initial level according to its confidentiality (tier)
+                target_level = stored.tier
+                if target_level > 0:
+                    from pgm.models import ReasonObject
+                    await self._repo.generalize_memory(
+                        str(stored.id),
+                        target_level,
+                        reason=ReasonObject(
+                            action="initial_confidentiality",
+                            details={"msg": f"Auto-generalized to L{target_level} based on sensitivity tier"}
+                        )
+                    )
             except Exception as e:
                 logger.error("Failed to pre-build ladder for memory %s: %s", stored.id, e)
             
