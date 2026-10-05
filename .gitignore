@@ -21,6 +21,7 @@ build/
 htmlcov/
 .pytest_cache/
 .mypy_cache/
+tests/
 
 # ── OS ────────────────────────────────────────────────────
 .DS_Store
