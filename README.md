@@ -121,14 +121,15 @@ alembic/                   # Database migrations
 | M5 | LangGraph agent + FastAPI + maintenance scheduler | 🟢 Done |
 | M6 | Synthetic benchmark + attacks + metrics + experiments | 🟢 Done |
 | M7 | Dashboard (React + TypeScript) | 🟢 Done |
-| M8 | Docs, reproducibility, limitations | ⬜ |
+| M8 | Docs, reproducibility, limitations | 🟢 Done |
 
-## Key Design Decisions
+## Documentation & Key Design Decisions
 
 See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) for implementation assumptions.
 See [docs/TAXONOMY.md](docs/TAXONOMY.md) for sensitivity category sources.
 See [docs/PRIVACY_CONCEPTS.md](docs/PRIVACY_CONCEPTS.md) for privacy model analysis.
-See [docs/RELATED_WORK_TODO.md](docs/RELATED_WORK_TODO.md) for papers to verify.
+See [docs/patent_context.md](docs/patent_context.md) for the patent application context and system novelty.
+See [docs/Memory_Generalization_Problem_Solution_Survey.docx](docs/Memory_Generalization_Problem_Solution_Survey.docx) for the comprehensive literature survey.
 
 ## License
 
